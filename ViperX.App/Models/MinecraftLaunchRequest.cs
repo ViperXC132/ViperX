@@ -8,6 +8,8 @@ public sealed record MinecraftLaunchRequest
     public required string Username { get; init; }
     public required string PlayerUuid { get; init; }
     public required string AccessToken { get; init; }
+    public string UserType { get; init; } = "msa";
+    public string? YggdrasilServerUrl { get; init; }
     public required string JavaExecutablePath { get; init; }
     public int MemoryMegabytes { get; init; } = 4096;
     public string? GameDirectory { get; init; }
