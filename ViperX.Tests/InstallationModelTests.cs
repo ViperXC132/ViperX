@@ -12,7 +12,8 @@ public sealed class InstallationModelTests
         Assert.NotEqual(Guid.Empty, installation.Id);
         Assert.Equal("Vanilla", installation.Loader);
         Assert.Equal(4096, installation.MemoryMegabytes);
-        Assert.Empty(installation.Validate());
+        Assert.Contains("A Minecraft version must be selected.", installation.Validate());
+        Assert.Contains("A game directory is required.", installation.Validate());
     }
 
     [Theory]
