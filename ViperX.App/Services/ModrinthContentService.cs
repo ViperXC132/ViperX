@@ -70,7 +70,16 @@ public sealed class ModrinthContentService
 
     public async Task InstallModAsync(ModrinthProject project, MinecraftInstallation installation, CancellationToken cancellationToken = default)
     {
-        var loader = string.Equals(installation.Loader, "Vanilla", StringComparison.OrdinalIgnoreCase) ? "fabric" : installation.Loader.ToLowerInvariant();
+        var loader = installation.Loader.ToLowerInvariant();
+        if (loader == "vanilla")
+        {
+            var loaderVersion = await new FabricLoaderService().InstallLatestStableAsync(installation.GameVersion, cancellationToken);
+            installation = installation with { Loader = "Fabric", LoaderVersion = loaderVersion };
+            var store = new InstallationStore();
+            var installations = (await store.LoadAsync(cancellationToken)).Select(item => item.Id == installation.Id ? installation : item).ToArray();
+            await store.SaveAsync(installations, cancellationToken);
+            loader = "fabric";
+        }
         if (loader is not ("fabric" or "forge" or "neoforge" or "quilt"))
             throw new InvalidOperationException($"Unsupported mod loader '{installation.Loader}'.");
         var version = await GetCompatibleVersionAsync(project.ProjectId, installation.GameVersion, loader, cancellationToken);
