@@ -17,8 +17,8 @@ public sealed class VerifiedDownloadService
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
-        if (source.Scheme is not ("https" or "http"))
-            throw new ArgumentException("Only HTTP and HTTPS downloads are supported.", nameof(source));
+        if (!string.Equals(source.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Downloads must use HTTPS.", nameof(source));
         if (expectedSha1 is not null && (expectedSha1.Length != 40 || !expectedSha1.All(Uri.IsHexDigit)))
             throw new ArgumentException("Expected SHA-1 must contain exactly 40 hexadecimal characters.", nameof(expectedSha1));
         if (expectedSize is < 0)
@@ -28,6 +28,12 @@ public sealed class VerifiedDownloadService
         var directory = Path.GetDirectoryName(fullPath)
             ?? throw new InvalidOperationException("Could not determine the destination directory.");
         Directory.CreateDirectory(directory);
+        if (File.Exists(fullPath) && await ExistingFileIsValidAsync(fullPath, expectedSha1, expectedSize, cancellationToken))
+        {
+            progress?.Report(1);
+            return;
+        }
+
         var tempPath = fullPath + "." + Guid.NewGuid().ToString("N") + ".download";
 
         try
@@ -75,5 +81,23 @@ public sealed class VerifiedDownloadService
             catch (IOException) { /* Best-effort cleanup; keep the original failure. */ }
             catch (UnauthorizedAccessException) { /* Best-effort cleanup. */ }
         }
+    }
+
+    private static async Task<bool> ExistingFileIsValidAsync(
+        string path,
+        string? expectedSha1,
+        long? expectedSize,
+        CancellationToken cancellationToken)
+    {
+        var info = new FileInfo(path);
+        if (expectedSize.HasValue && info.Length != expectedSize.Value)
+            return false;
+        if (!string.IsNullOrWhiteSpace(expectedSha1))
+        {
+            await using var stream = File.OpenRead(path);
+            var hash = await SHA1.HashDataAsync(stream, cancellationToken);
+            return string.Equals(Convert.ToHexString(hash), expectedSha1, StringComparison.OrdinalIgnoreCase);
+        }
+        return expectedSize.HasValue;
     }
 }
