@@ -73,7 +73,18 @@ public sealed class ModrinthContentService
         var loader = installation.Loader.ToLowerInvariant();
         if (loader == "vanilla")
         {
+            // FabricLoaderService installs into the shared vanilla instance. Copy its resolved
+            // profile into this installation so isolated instances remain independently launchable.
             var loaderVersion = await new FabricLoaderService().InstallLatestStableAsync(installation.GameVersion, cancellationToken);
+            var sharedProfile = FabricLoaderService.GetProfilePath(installation.GameVersion, loaderVersion);
+            if (!File.Exists(sharedProfile))
+                throw new FileNotFoundException("Fabric profile was not created.", sharedProfile);
+            var instanceRoot = Path.GetFullPath(installation.GameDirectory);
+            var profileDirectory = Path.Combine(instanceRoot, "loader-profiles");
+            Directory.CreateDirectory(profileDirectory);
+            var instanceProfile = Path.Combine(profileDirectory, Path.GetFileName(sharedProfile));
+            if (!string.Equals(Path.GetFullPath(sharedProfile), Path.GetFullPath(instanceProfile), StringComparison.OrdinalIgnoreCase))
+                File.Copy(sharedProfile, instanceProfile, overwrite: true);
             installation = installation with { Loader = "Fabric", LoaderVersion = loaderVersion };
             var store = new InstallationStore();
             var installations = (await store.LoadAsync(cancellationToken)).Select(item => item.Id == installation.Id ? installation : item).ToArray();
