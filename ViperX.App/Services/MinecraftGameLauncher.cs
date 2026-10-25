@@ -143,7 +143,7 @@ public sealed class MinecraftGameLauncher
             ["auth_uuid"] = request.PlayerUuid.Replace("-", string.Empty, StringComparison.Ordinal),
             ["auth_access_token"] = request.AccessToken,
             ["auth_session"] = request.AccessToken,
-            ["user_type"] = "msa",
+            ["user_type"] = request.UserType,
             ["version_name"] = request.VersionId,
             ["version_type"] = metadata.TryGetProperty("type", out var typeElement) ? typeElement.GetString() ?? "release" : "release",
             ["game_directory"] = gameDirectory,
@@ -168,6 +168,16 @@ public sealed class MinecraftGameLauncher
             WorkingDirectory = gameDirectory,
             UseShellExecute = false
         };
+        if (!string.IsNullOrWhiteSpace(request.YggdrasilServerUrl))
+        {
+            var server = request.YggdrasilServerUrl.Trim();
+            if (!Uri.TryCreate(server, UriKind.Absolute, out var serverUri) ||
+                (serverUri.Scheme != Uri.UriSchemeHttps && !(serverUri.IsLoopback && serverUri.Scheme == Uri.UriSchemeHttp)))
+                throw new InvalidOperationException("Custom Yggdrasil servers must use HTTPS, except localhost.");
+            var injector = await new AuthlibInjectorService().EnsureDownloadedAsync(cancellationToken);
+            startInfo.ArgumentList.Add($"-javaagent:{injector}={serverUri.AbsoluteUri.TrimEnd('/')}");
+        }
+
         startInfo.ArgumentList.Add($"-Xms512M");
         startInfo.ArgumentList.Add($"-Xmx{request.MemoryMegabytes}M");
         startInfo.ArgumentList.Add($"-Djava.library.path={nativesDirectory}");
