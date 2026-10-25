@@ -85,6 +85,8 @@ public partial class MainWindow : Window
             var process = await launcher.LaunchAsync(new ViperX.App.Models.MinecraftLaunchRequest
             {
                 VersionId = installation.GameVersion,
+                Loader = installation.Loader,
+                LoaderVersion = installation.LoaderVersion,
                 Username = session.Account.Username,
                 PlayerUuid = session.Account.Uuid,
                 AccessToken = session.MinecraftAccessToken,
