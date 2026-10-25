@@ -110,7 +110,6 @@ public partial class SettingsWindow : Window
             _settings = settings;
             StatusText.Text = "Settings saved.";
             DialogResult = true;
-            Close();
         }
         catch (Exception ex)
         {
