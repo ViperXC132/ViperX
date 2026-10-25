@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Windows;
 using ViperX.App.Services;
 
@@ -71,7 +70,7 @@ public partial class MainWindow : Window
                 : await javaService.ProbeAsync(launcherSettings.JavaExecutablePath);
             var runtimes = configuredRuntime is null
                 ? await javaService.FindInstalledAsync()
-                : new[] { configuredRuntime };
+                : new[] { configuredRuntime! };
             var runtime = runtimes
                 .Where(item => item.MajorVersion >= requiredJavaMajor)
                 .OrderBy(item => item.MajorVersion == requiredJavaMajor ? 0 : 1)
@@ -116,8 +115,11 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
-    private void Mods_Click(object sender, RoutedEventArgs e) =>
-        SetPage("CUSTOMIZE", "Mods & modpacks", "Mod discovery, loader installation, and modpack import will be added after the installation engine.");
+    private void Mods_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new ModsProfilesWindow { Owner = this };
+        window.ShowDialog();
+    }
 
     private void Accounts_Click(object sender, RoutedEventArgs e)
     {
