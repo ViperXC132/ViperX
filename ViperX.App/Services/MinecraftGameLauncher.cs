@@ -31,8 +31,8 @@ public sealed class MinecraftGameLauncher
         if (!File.Exists(clientJar) || !File.Exists(Path.Combine(versionDirectory, "installed.json")))
             throw new InvalidOperationException("This version is not installed. Install it before launching.");
 
-        using var response = await new HttpClient { Timeout = TimeSpan.FromSeconds(30) }
-            .GetAsync(version.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        using var response = await http.GetAsync(version.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
@@ -94,8 +94,18 @@ public sealed class MinecraftGameLauncher
         }
 
         startInfo.ArgumentList.Add(mainClass);
-        foreach (var argument in GetArguments(metadata, "game"))
-            AddArgument(startInfo, argument, placeholders);
+        var gameArguments = GetArguments(metadata, "game");
+        if (gameArguments.Count > 0)
+        {
+            foreach (var argument in gameArguments)
+                AddArgument(startInfo, argument, placeholders);
+        }
+        else if (metadata.TryGetProperty("minecraftArguments", out var legacyArguments) &&
+                 legacyArguments.ValueKind == JsonValueKind.String)
+        {
+            foreach (var argument in SplitLegacyArguments(legacyArguments.GetString()!))
+                AddArgument(startInfo, argument, placeholders);
+        }
 
         var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
         if (!process.Start())
@@ -149,6 +159,12 @@ public sealed class MinecraftGameLauncher
                 allowed = action.GetString() == "allow";
         }
         return allowed;
+    }
+
+    private static IEnumerable<string> SplitLegacyArguments(string arguments)
+    {
+        // Mojang's legacy argument format is space-delimited and does not define shell quoting.
+        return arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
     private static void AddArgument(ProcessStartInfo startInfo, string argument, IReadOnlyDictionary<string, string> placeholders)
