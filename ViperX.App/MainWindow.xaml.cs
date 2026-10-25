@@ -92,6 +92,8 @@ public partial class MainWindow : Window
                 Username = session.Account.Username,
                 PlayerUuid = session.Account.Uuid,
                 AccessToken = session.MinecraftAccessToken,
+                UserType = session.UserType,
+                YggdrasilServerUrl = session.YggdrasilServerUrl,
                 JavaExecutablePath = runtime.ExecutablePath,
                 MemoryMegabytes = installation.MemoryMegabytes == 4096
                     ? launcherSettings.DefaultMemoryMegabytes
