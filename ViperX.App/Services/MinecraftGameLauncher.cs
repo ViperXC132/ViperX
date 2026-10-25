@@ -180,6 +180,28 @@ public sealed class MinecraftGameLauncher
             var matches = true;
             if (rule.TryGetProperty("os", out var os) && os.TryGetProperty("name", out var name))
                 matches = string.Equals(name.GetString(), "windows", StringComparison.OrdinalIgnoreCase) == OperatingSystem.IsWindows();
+            if (matches && rule.TryGetProperty("features", out var features))
+            {
+                foreach (var feature in features.EnumerateObject())
+                {
+                    var supported = feature.Name switch
+                    {
+                        "is_demo_user" => false,
+                        "has_custom_resolution" => false,
+                        "has_quick_plays_support" => false,
+                        "is_quick_play_singleplayer" => false,
+                        "is_quick_play_multiplayer" => false,
+                        "is_quick_play_realms" => false,
+                        _ => false
+                    };
+                    if (feature.Value.ValueKind is JsonValueKind.True or JsonValueKind.False &&
+                        feature.Value.GetBoolean() != supported)
+                    {
+                        matches = false;
+                        break;
+                    }
+                }
+            }
             if (matches && rule.TryGetProperty("action", out var action))
                 allowed = action.GetString() == "allow";
         }
