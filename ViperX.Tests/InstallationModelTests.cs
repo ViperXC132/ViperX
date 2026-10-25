@@ -1,3 +1,4 @@
+using Xunit;
 using ViperX.App.Models;
 
 namespace ViperX.Tests;
