@@ -1,0 +1,54 @@
+<Window x:Class="ViperX.App.VersionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ViperX — Minecraft Versions" Height="650" Width="900"
+        MinHeight="520" MinWidth="720" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}" Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI">
+    <Grid Margin="26">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="MINECRAFT LIBRARY" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold"/>
+            <TextBlock Text="Game versions" FontSize="28" FontWeight="Bold" Margin="0,5,0,5"/>
+            <TextBlock Text="Browse official Minecraft versions from Mojang's version manifest." Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+        </StackPanel>
+        <DockPanel Grid.Row="1" Margin="0,0,0,14">
+            <Button x:Name="RefreshButton" DockPanel.Dock="Right" Content="↻  Refresh" Click="Refresh_Click" Margin="10,0,0,0"/>
+            <TextBox x:Name="SearchBox" VerticalContentAlignment="Center" ToolTip="Filter versions by ID (for example, 1.21.4)" TextChanged="SearchBox_TextChanged"/>
+        </DockPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Margin="0,0,12,0">
+                <DockPanel Margin="10">
+                    <TextBlock x:Name="CountText" DockPanel.Dock="Top" Text="Waiting for version data…" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="5,4,5,10"/>
+                    <ListBox x:Name="VersionsList" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}" DisplayMemberPath="Id" SelectionChanged="VersionsList_SelectionChanged"/>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="1" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="22">
+                <StackPanel>
+                    <TextBlock Text="SELECTED VERSION" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold"/>
+                    <TextBlock x:Name="SelectedVersionText" Text="Choose a version" FontSize="25" FontWeight="Bold" Margin="0,10,0,8"/>
+                    <Border x:Name="TypeBadge" Background="#203B29" CornerRadius="5" Padding="9,5" HorizontalAlignment="Left" Margin="0,0,0,18">
+                        <TextBlock x:Name="SelectedTypeText" Text="NOT LOADED" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold"/>
+                    </Border>
+                    <TextBlock Text="Release date" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                    <TextBlock x:Name="ReleaseDateText" Text="—" FontSize="13" Margin="0,4,0,16"/>
+                    <TextBlock Text="Manifest entry" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                    <TextBlock x:Name="ManifestUrlText" Text="Select a version to inspect its metadata." TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                    <Border Background="#171F19" CornerRadius="8" Padding="12" Margin="0,22,0,0">
+                        <TextBlock Text="Phase 1: this catalog reads version metadata only. Installing files and launching the game will be added in Phase 2." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="11" LineHeight="17"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <DockPanel Grid.Row="3" Margin="0,14,0,0">
+            <TextBlock x:Name="StatusText" Text="Ready." Foreground="{StaticResource MutedBrush}" FontSize="11" VerticalAlignment="Center"/>
+            <Button DockPanel.Dock="Right" Content="Close" Click="Close_Click" Padding="18,9"/>
+        </DockPanel>
+    </Grid>
+</Window>
