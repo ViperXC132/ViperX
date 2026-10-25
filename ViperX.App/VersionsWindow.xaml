@@ -40,7 +40,8 @@
                     <TextBlock x:Name="ReleaseDateText" Text="—" FontSize="13" Margin="0,4,0,16"/>
                     <TextBlock Text="Manifest entry" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     <TextBlock x:Name="ManifestUrlText" Text="Select a version to inspect its metadata." TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
-                    <Border Background="#171F19" CornerRadius="8" Padding="12" Margin="0,22,0,0">
+                    <Button x:Name="InstallButton" Content="↓  Install vanilla version" HorizontalAlignment="Left" Margin="0,18,0,0" Click="Install_Click" IsEnabled="False" Background="{StaticResource AccentBrush}" Foreground="#061009" FontWeight="Bold"/>
+                    <Border Background="#171F19" CornerRadius="8" Padding="12" Margin="0,14,0,0">
                         <TextBlock Text="Phase 1: this catalog reads version metadata only. Installing files and launching the game will be added in Phase 2." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="11" LineHeight="17"/>
                     </Border>
                 </StackPanel>
