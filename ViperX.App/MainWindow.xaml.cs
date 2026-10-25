@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows;
 using ViperX.App.Services;
+using ViperX.App.Models;
 
 namespace ViperX.App;
 
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
                 var settings = await new LauncherSettingsService().LoadAsync();
                 Width = settings.WindowWidth;
                 Height = settings.WindowHeight;
+                await LoadInstallationsAsync();
             }
             catch
             {
@@ -57,7 +59,7 @@ public partial class MainWindow : Window
             PageTitle.Text = "Preparing your world…";
             var store = new InstallationStore();
             var installations = await store.LoadAsync();
-            var installation = installations
+            var installation = InstallationSelector.SelectedItem as MinecraftInstallation ?? installations
                 .OrderByDescending(item => item.LastPlayedAt ?? DateTimeOffset.MinValue)
                 .FirstOrDefault();
             if (installation is null)
@@ -132,10 +134,30 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
-    private void Mods_Click(object sender, RoutedEventArgs e)
+    private async void Mods_Click(object sender, RoutedEventArgs e)
     {
         var window = new ModsProfilesWindow { Owner = this };
         window.ShowDialog();
+        await LoadInstallationsAsync();
+    }
+
+    private async Task LoadInstallationsAsync()
+    {
+        try
+        {
+            var installations = await new InstallationStore().LoadAsync();
+            InstallationSelector.ItemsSource = installations;
+            InstallationSelector.SelectedItem = installations
+                .OrderByDescending(item => item.LastPlayedAt ?? DateTimeOffset.MinValue)
+                .FirstOrDefault();
+            if (installations.Count == 0) PageTitle.Text = "Install Minecraft to get started.";
+        }
+        catch (Exception ex)
+        {
+            PageEyebrow.Text = "INSTALLATIONS";
+            PageTitle.Text = "Could not load installations.";
+            MessageBox.Show(this, ex.Message, "ViperX installations", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void Accounts_Click(object sender, RoutedEventArgs e)
