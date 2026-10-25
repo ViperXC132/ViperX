@@ -12,7 +12,7 @@ public sealed class FabricLoaderService
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
     private readonly VerifiedDownloadService _downloader = new();
 
-    public async Task<string> InstallLatestStableAsync(string gameVersion, CancellationToken cancellationToken = default)
+    public async Task<string> InstallLatestStableAsync(string gameVersion, CancellationToken cancellationToken = default, string? requestedLoaderVersion = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(gameVersion);
         var instanceRoot = Path.Combine(ViperXPaths.InstancesDirectory, SafeSegment(gameVersion));
@@ -28,7 +28,9 @@ public sealed class FabricLoaderService
                 item.GetProperty("loader").GetProperty("version").GetString()!,
                 item.GetProperty("loader").TryGetProperty("stable", out var stable) && stable.GetBoolean()))
             .ToArray();
-        var selected = available.FirstOrDefault(item => item.Stable) ?? available.FirstOrDefault();
+        var selected = requestedLoaderVersion is null
+            ? available.FirstOrDefault(item => item.Stable) ?? available.FirstOrDefault()
+            : available.FirstOrDefault(item => string.Equals(item.Version, requestedLoaderVersion, StringComparison.OrdinalIgnoreCase));
         if (selected is null)
             throw new InvalidDataException($"Fabric does not publish a loader for Minecraft {gameVersion}.");
 
