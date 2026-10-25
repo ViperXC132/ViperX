@@ -194,7 +194,7 @@ public sealed class MinecraftGameLauncher
                         "is_quick_play_realms" => false,
                         _ => false
                     };
-                    if (feature.Value.ValueKind is JsonValueKind.True or JsonValueKind.False &&
+                    if ((feature.Value.ValueKind is JsonValueKind.True or JsonValueKind.False) &&
                         feature.Value.GetBoolean() != supported)
                     {
                         matches = false;
