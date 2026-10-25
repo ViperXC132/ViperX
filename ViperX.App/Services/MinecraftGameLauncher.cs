@@ -179,7 +179,7 @@ public sealed class MinecraftGameLauncher
     private static void AddArgument(ProcessStartInfo startInfo, string argument, IReadOnlyDictionary<string, string> placeholders)
     {
         foreach (var pair in placeholders)
-            argument = argument.Replace(" + pair.Key + ", pair.Value, StringComparison.Ordinal);
+            argument = argument.Replace("${" + pair.Key + "}", pair.Value, StringComparison.Ordinal);
         startInfo.ArgumentList.Add(argument);
     }
 
