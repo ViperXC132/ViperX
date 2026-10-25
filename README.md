@@ -50,15 +50,15 @@ dotnet run --project .\ViperX.App\ViperX.App.csproj
 - [x] Installation and profile metadata foundations.
 - [x] Profile CRUD UI and persistent profile metadata.
 - [x] Inspect and open each installation’s local mods folder.
-- [ ] Fabric/Forge/NeoForge installer integrations and mod management.
+- [x] Fabric loader integration (needs real-game verification); Forge/NeoForge are not yet integrated.\n- [x] Local mod JAR install/copy, enable/disable by safe filename extension, remove, list, and open mods folder.
 
 ### Polish & Release
 - [x] Atomic JSON persistence for settings and installation metadata.
 - [x] Automated unit-test project and Windows GitHub Actions workflow.
 - [ ] Run the Windows CI build/tests and resolve any remaining failures (this environment cannot run .NET locally).
-- [ ] Diagnostics, crash log viewer, accessibility review, packaging, and release validation.
+- [x] Local diagnostics window for latest.log and crash reports, with bounded file reads.\n- [ ] Accessibility review, packaging, and release validation.
 
 ## Important limitations
 This repository is still under active development. The installer downloads vanilla client, libraries, and asset objects from URLs in Mojang's version metadata; it is not yet a fully verified production launcher. Launching requires a valid authenticated Minecraft session. The Microsoft authentication service needs a registered public-client application ID and is not yet wired to the UI. Do not commit client IDs that belong to someone else, client secrets, access tokens, refresh tokens, or other credentials.
 
-Mods and mod loaders are not implemented yet. A successful compile is not claimed until the Windows Actions build and tests report success.
+ViperX has basic local mod-file management and Fabric profile support; Forge/NeoForge, modpack importing, remote mod catalog integration, and real-world launch validation remain unfinished. The diagnostics window reads local logs only and does not upload them. A successful compile is not claimed until the latest Windows Actions build and tests report success.
