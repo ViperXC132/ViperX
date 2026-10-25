@@ -94,7 +94,8 @@ public partial class MainWindow : Window
                 MemoryMegabytes = installation.MemoryMegabytes == 4096
                     ? launcherSettings.DefaultMemoryMegabytes
                     : installation.MemoryMegabytes,
-                GameDirectory = launcherSettings.DefaultGameDirectory ?? installation.GameDirectory
+                GameDirectory = installation.GameDirectory,
+                InstanceDirectory = installation.GameDirectory
             });
             _gameProcess?.Dispose();
             _gameProcess = process;
