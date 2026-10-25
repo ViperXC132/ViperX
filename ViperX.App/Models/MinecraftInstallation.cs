@@ -13,6 +13,7 @@ public sealed record MinecraftInstallation
     public string? JavaExecutablePath { get; init; }
     public int MemoryMegabytes { get; init; } = 4096;
     public string Loader { get; init; } = "Vanilla";
+    public string? LoaderVersion { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastPlayedAt { get; init; }
 
