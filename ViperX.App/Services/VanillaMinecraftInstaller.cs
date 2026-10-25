@@ -70,7 +70,8 @@ public sealed class VanillaMinecraftInstaller
                     await DownloadArtifactAsync(artifact, cancellationToken);
 
                 if (downloads.TryGetProperty("classifiers", out var classifiers) &&
-                    classifiers.TryGetProperty("natives-windows", out var nativeName) &&
+                    library.TryGetProperty("natives", out var natives) &&
+                    natives.TryGetProperty("windows", out var nativeName) &&
                     classifiers.TryGetProperty(nativeName.GetString() ?? string.Empty, out var nativeArtifact))
                 {
                     await DownloadArtifactAsync(nativeArtifact, cancellationToken);
