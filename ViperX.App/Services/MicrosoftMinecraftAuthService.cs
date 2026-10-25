@@ -7,7 +7,7 @@ using ViperX.App.Models;
 
 namespace ViperX.App.Services;
 
-public sealed record MicrosoftDeviceCode(string UserCode, Uri VerificationUri, string Message, DateTimeOffset ExpiresAt);
+public sealed record MicrosoftDeviceCode(string UserCode, string DeviceCode, Uri VerificationUri, string Message, DateTimeOffset ExpiresAt);
 public sealed record AuthenticatedMinecraftSession(MinecraftAccount Account, string MinecraftAccessToken);
 
 /// <summary>
@@ -49,6 +49,7 @@ public sealed class MicrosoftMinecraftAuthService
             ?? throw new InvalidDataException("Microsoft did not provide a verification URL.");
         return new MicrosoftDeviceCode(
             root.GetProperty("user_code").GetString()!,
+            root.GetProperty("device_code").GetString()!,
             new Uri(verification),
             root.TryGetProperty("message", out var message) ? message.GetString() ?? "Complete sign-in in your browser." : "Complete sign-in in your browser.",
             DateTimeOffset.UtcNow.AddSeconds(root.GetProperty("expires_in").GetInt32()));
@@ -134,7 +135,7 @@ public sealed class MicrosoftMinecraftAuthService
             {
                 ["client_id"] = _clientId,
                 ["grant_type"] = "urn:ietf:params:oauth:grant-type:device_code",
-                ["device_code"] = deviceCode.UserCode
+                ["device_code"] = deviceCode.DeviceCode
             });
             using var response = await Http.PostAsync(TokenEndpoint, content, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
