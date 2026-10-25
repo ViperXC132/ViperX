@@ -46,14 +46,19 @@ public partial class MainWindow : Window
             if (installation is null)
                 throw new InvalidOperationException("No installed Minecraft version was found. Open Versions and install a vanilla release first.");
 
+            var launcher = new MinecraftGameLauncher();
+            var requiredJavaMajor = await launcher.GetRequiredJavaMajorAsync(installation.GameVersion);
             var javaService = new JavaRuntimeService();
             var runtimes = await javaService.FindInstalledAsync();
-            var runtime = runtimes.OrderByDescending(item => item.MajorVersion).FirstOrDefault();
+            var runtime = runtimes
+                .Where(item => item.MajorVersion >= requiredJavaMajor)
+                .OrderBy(item => item.MajorVersion == requiredJavaMajor ? 0 : 1)
+                .ThenBy(item => Math.Abs(item.MajorVersion - requiredJavaMajor))
+                .FirstOrDefault();
             if (runtime is null)
-                throw new InvalidOperationException("Java was not found. Install a compatible Java runtime or configure Java in Settings.");
+                throw new InvalidOperationException($"Minecraft {installation.GameVersion} requires Java {requiredJavaMajor} or later, but no compatible Java runtime was found.");
 
             PageTitle.Text = $"Launching Minecraft {installation.GameVersion}…";
-            var launcher = new MinecraftGameLauncher();
             using var process = await launcher.LaunchAsync(new ViperX.App.Models.MinecraftLaunchRequest
             {
                 VersionId = installation.GameVersion,
