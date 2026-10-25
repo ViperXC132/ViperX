@@ -142,6 +142,43 @@ public partial class ModsProfilesWindow : Window
         catch (Exception ex) { StatusText.Text = "Modpack import failed."; MessageBox.Show(this, ex.Message, "Modpack import failed", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
+    private async void SearchModrinthPacks_Click(object sender, RoutedEventArgs e)
+    {
+        var query = ModSearchBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(query)) { StatusText.Text = "Enter a name to search Modrinth modpacks."; return; }
+        try
+        {
+            StatusText.Text = "Searching Modrinth modpacks…";
+            _modrinthResults = await _modrinth.SearchModpacksAsync(query);
+            ModsList.DisplayMemberPath = nameof(ModrinthProject.Title);
+            ModsList.ItemsSource = _modrinthResults;
+            if (ModsList.Items.Count > 0) ModsList.SelectedIndex = 0;
+            StatusText.Text = $"Found {_modrinthResults.Count} modpack project(s). Select a pack and install it.";
+        }
+        catch (Exception ex) { StatusText.Text = "Modpack search failed."; MessageBox.Show(this, ex.Message, "Modrinth modpacks", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    private async void InstallSelectedModpack_Click(object sender, RoutedEventArgs e)
+    {
+        if (ModsList.SelectedItem is not ModrinthProject project || !string.Equals(project.ProjectType, "modpack", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(this, "Search modpacks and select a modpack project first.", "Select a modpack", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        try
+        {
+            StatusText.Text = $"Downloading and importing '{project.Title}'…";
+            var installation = await _modrinth.DownloadAndImportModpackAsync(project);
+            _installationItems = await _installations.LoadAsync();
+            InstallationCombo.ItemsSource = _installationItems;
+            InstallationCombo.SelectedItem = _installationItems.FirstOrDefault(item => item.Id == installation.Id);
+            RefreshMods();
+            StatusText.Text = $"Installed modpack '{installation.Name}'.";
+            MessageBox.Show(this, $"Modpack '{installation.Name}' was installed. Forge/NeoForge/Quilt packs are currently rejected if their loader is unsupported.", "Modpack installed", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) { StatusText.Text = "Modpack installation failed."; MessageBox.Show(this, ex.Message, "Modpack installation failed", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
+
     private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
     private void InstallationCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => RefreshMods();
 
