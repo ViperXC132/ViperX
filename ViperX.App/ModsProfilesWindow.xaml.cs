@@ -13,6 +13,8 @@ public partial class ModsProfilesWindow : Window
     private readonly ProfileStore _profiles = new();
     private IReadOnlyList<MinecraftInstallation> _installationItems = Array.Empty<MinecraftInstallation>();
     private List<LauncherProfile> _profileItems = new();
+    private readonly ModrinthContentService _modrinth = new();
+    private IReadOnlyList<ModrinthProject> _modrinthResults = Array.Empty<ModrinthProject>();
 
     public ModsProfilesWindow()
     {
@@ -83,6 +85,63 @@ public partial class ModsProfilesWindow : Window
         RefreshMods();
     }
 
+    private async void SearchModrinth_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationCombo.SelectedItem is not MinecraftInstallation installation)
+        {
+            MessageBox.Show(this, "Install Minecraft first so ViperX can filter mods by game version.", "No installation", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var query = ModSearchBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(query)) { StatusText.Text = "Enter a mod name to search Modrinth."; return; }
+        try
+        {
+            StatusText.Text = "Searching Modrinth for compatible mods…";
+            var loader = string.Equals(installation.Loader, "Vanilla", StringComparison.OrdinalIgnoreCase) ? "fabric" : installation.Loader.ToLowerInvariant();
+            _modrinthResults = await _modrinth.SearchModsAsync(query, installation.GameVersion, loader);
+            ModsList.DisplayMemberPath = nameof(ModrinthProject.Title);
+            ModsList.ItemsSource = _modrinthResults;
+            if (ModsList.Items.Count > 0) ModsList.SelectedIndex = 0;
+            StatusText.Text = $"Found {_modrinthResults.Count} Modrinth project(s). Select one and install it.";
+        }
+        catch (Exception ex) { StatusText.Text = "Modrinth search failed."; MessageBox.Show(this, ex.Message, "Modrinth search", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    private async void InstallSelectedModrinth_Click(object sender, RoutedEventArgs e)
+    {
+        if (ModsList.SelectedItem is not ModrinthProject project || InstallationCombo.SelectedItem is not MinecraftInstallation installation)
+        {
+            MessageBox.Show(this, "Search Modrinth and select a project first.", "Select a mod", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        try
+        {
+            StatusText.Text = $"Downloading {project.Title}…";
+            await _modrinth.InstallModAsync(project, installation);
+            RefreshMods();
+            StatusText.Text = $"Installed {project.Title}. Check dependencies and compatibility before launching.";
+        }
+        catch (Exception ex) { MessageBox.Show(this, ex.Message, "Mod installation failed", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
+
+    private async void ImportModpack_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Title = "Import Modrinth modpack", Filter = "Modrinth modpack (*.mrpack)|*.mrpack", CheckFileExists = true };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            StatusText.Text = "Importing modpack. Downloads may take several minutes…";
+            var installation = await _modrinth.ImportMrpackAsync(dialog.FileName);
+            _installationItems = await _installations.LoadAsync();
+            InstallationCombo.ItemsSource = _installationItems;
+            InstallationCombo.SelectedItem = _installationItems.FirstOrDefault(item => item.Id == installation.Id);
+            RefreshMods();
+            StatusText.Text = $"Imported '{installation.Name}' for Minecraft {installation.GameVersion}.";
+            MessageBox.Show(this, $"Modpack '{installation.Name}' was imported. Review Java and loader requirements before launching.", "Modpack imported", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) { StatusText.Text = "Modpack import failed."; MessageBox.Show(this, ex.Message, "Modpack import failed", MessageBoxButton.OK, MessageBoxImage.Error); }
+    }
+
     private void RefreshMods_Click(object sender, RoutedEventArgs e) => RefreshMods();
     private void InstallationCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => RefreshMods();
 
@@ -111,6 +170,7 @@ public partial class ModsProfilesWindow : Window
                 .Select(path => new ModFileItem(Path.GetFileName(path),
                     path.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase)))
                 .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            ModsList.DisplayMemberPath = nameof(ModFileItem.DisplayName);
             ModsList.ItemsSource = mods;
             StatusText.Text = mods.Length == 0 ? "No mod JARs found. Use Install mod to add a local file." :
                 $"Found {mods.Length} mod file(s); disabled mods are marked.";
