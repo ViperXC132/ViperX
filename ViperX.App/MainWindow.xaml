@@ -17,6 +17,7 @@
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,8">
           <Border Height="1" Background="{StaticResource LineBrush}" Margin="0,0,0,16"/>
+          <Button Content="▤    Diagnostics" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="Diagnostics_Click"/>
           <Button Content="⚙    Settings" HorizontalContentAlignment="Left" Click="Settings_Click"/>
           <TextBlock Text="VIPERX • EARLY BUILD" Foreground="#647168" FontSize="9" Margin="8,18,0,0"/>
         </StackPanel>
