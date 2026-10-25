@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+
 namespace ViperX.App.Services;
 
 /// <summary>Centralizes local data paths used by ViperX.</summary>
