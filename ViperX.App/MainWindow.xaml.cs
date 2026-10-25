@@ -5,6 +5,7 @@ namespace ViperX.App;
 
 public partial class MainWindow : Window
 {
+    private Process? _gameProcess;
     public MainWindow()
     {
         InitializeComponent();
@@ -80,7 +81,7 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException($"Minecraft {installation.GameVersion} requires Java {requiredJavaMajor} or later, but no compatible Java runtime was found.");
 
             PageTitle.Text = $"Launching Minecraft {installation.GameVersion}…";
-            using var process = await launcher.LaunchAsync(new ViperX.App.Models.MinecraftLaunchRequest
+            var process = await launcher.LaunchAsync(new ViperX.App.Models.MinecraftLaunchRequest
             {
                 VersionId = installation.GameVersion,
                 Username = session.Account.Username,
@@ -92,6 +93,18 @@ public partial class MainWindow : Window
                     : installation.MemoryMegabytes,
                 GameDirectory = launcherSettings.DefaultGameDirectory ?? installation.GameDirectory
             });
+            _gameProcess?.Dispose();
+            _gameProcess = process;
+            process.Exited += (_, _) => Dispatcher.InvokeAsync(() =>
+            {
+                PageEyebrow.Text = "PLAY";
+                PageTitle.Text = $"Minecraft {installation.GameVersion} exited (code {process.ExitCode}).";
+                if (!launcherSettings.KeepLauncherOpenAfterGameExit)
+                    Close();
+            });
+            if (process.HasExited)
+                PageTitle.Text = $"Minecraft {installation.GameVersion} exited unexpectedly.";
+
             installation = installation with { LastPlayedAt = DateTimeOffset.UtcNow };
             await store.SaveAsync(installations.Select(item => item.Id == installation.Id ? installation : item));
             PageEyebrow.Text = "PLAY";
