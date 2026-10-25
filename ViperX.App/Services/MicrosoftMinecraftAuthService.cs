@@ -8,7 +8,7 @@ using ViperX.App.Models;
 namespace ViperX.App.Services;
 
 public sealed record MicrosoftDeviceCode(string UserCode, string DeviceCode, Uri VerificationUri, string Message, DateTimeOffset ExpiresAt);
-public sealed record AuthenticatedMinecraftSession(MinecraftAccount Account, string MinecraftAccessToken);
+public sealed record AuthenticatedMinecraftSession(MinecraftAccount Account, string MinecraftAccessToken, string UserType = "msa", string? YggdrasilServerUrl = null);
 
 /// <summary>
 /// Official Microsoft -> Xbox Live -> XSTS -> Minecraft Services sign-in flow.
