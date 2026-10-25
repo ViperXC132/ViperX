@@ -68,3 +68,27 @@ public sealed class InstallationModelTests
         Assert.Empty(profile.Validate());
     }
 }
+
+
+public sealed class LauncherSettingsTests
+{
+    [Fact]
+    public void DefaultSettings_AreValid()
+    {
+        var settings = new ViperX.App.Models.LauncherSettings();
+        Assert.Empty(settings.Validate());
+    }
+
+    [Fact]
+    public void Settings_RejectInvalidMemoryAndWindowDimensions()
+    {
+        var settings = new ViperX.App.Models.LauncherSettings
+        {
+            DefaultMemoryMegabytes = 128,
+            WindowWidth = 100,
+            WindowHeight = 100
+        };
+
+        Assert.Equal(3, settings.Validate().Count);
+    }
+}
