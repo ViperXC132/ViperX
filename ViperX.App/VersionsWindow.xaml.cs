@@ -84,6 +84,7 @@ public partial class VersionsWindow : Window
         ReleaseDateText.Text = version.ReleaseTime?.ToLocalTime().ToString("dd MMM yyyy") ?? "Not provided";
         ManifestUrlText.Text = version.Url;
         InstallButton.IsEnabled = version.IsRelease || version.IsSnapshot;
+        InstallFabricButton.IsEnabled = File.Exists(Path.Combine(ViperXPaths.InstancesDirectory, version.Id, "versions", version.Id, "installed.json"));
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) =>
@@ -111,6 +112,7 @@ public partial class VersionsWindow : Window
                         : item.Stage;
             });
             await _installer.InstallAsync(version.Id, progress, token);
+            InstallFabricButton.IsEnabled = true;
             StatusText.Text = $"Minecraft {version.Id} installed. Java and sign-in are still required to launch it.";
             MessageBox.Show(this, $"Minecraft {version.Id} files were downloaded and verified where Mojang supplied checksums.\n\nYou can now configure Java and sign in before launching.", "Installation complete", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -126,6 +128,37 @@ public partial class VersionsWindow : Window
         finally
         {
             InstallButton.IsEnabled = VersionsList.SelectedItem is MinecraftVersionInfo selected && (selected.IsRelease || selected.IsSnapshot);
+            RefreshButton.IsEnabled = true;
+            SearchBox.IsEnabled = true;
+        }
+    }
+
+    private async void InstallFabric_Click(object sender, RoutedEventArgs e)
+    {
+        if (VersionsList.SelectedItem is not MinecraftVersionInfo version || !InstallFabricButton.IsEnabled)
+            return;
+        InstallFabricButton.IsEnabled = false;
+        InstallButton.IsEnabled = false;
+        RefreshButton.IsEnabled = false;
+        SearchBox.IsEnabled = false;
+        StatusText.Text = "Finding the latest stable Fabric loader…";
+        try
+        {
+            var loaderVersion = await new FabricLoaderService().InstallLatestStableAsync(version.Id);
+            StatusText.Text = $"Fabric {loaderVersion} installed for Minecraft {version.Id}.";
+            MessageBox.Show(this, $"Fabric {loaderVersion} is ready for Minecraft {version.Id}. Select Play to launch it after signing in and configuring Java.", "Fabric installed",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Fabric installation failed. Review the error and retry.";
+            MessageBox.Show(this, ex.Message, "Fabric installation failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            InstallButton.IsEnabled = VersionsList.SelectedItem is MinecraftVersionInfo selected && (selected.IsRelease || selected.IsSnapshot);
+            InstallFabricButton.IsEnabled = VersionsList.SelectedItem is MinecraftVersionInfo current &&
+                File.Exists(Path.Combine(ViperXPaths.InstancesDirectory, current.Id, "versions", current.Id, "installed.json"));
             RefreshButton.IsEnabled = true;
             SearchBox.IsEnabled = true;
         }
