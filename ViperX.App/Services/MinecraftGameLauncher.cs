@@ -44,6 +44,14 @@ public sealed class MinecraftGameLauncher
                          assetElement.TryGetProperty("id", out var idElement)
             ? idElement.GetString() ?? string.Empty
             : string.Empty;
+        var loggingPath = string.Empty;
+        if (metadata.TryGetProperty("logging", out var logging) &&
+            logging.TryGetProperty("client", out var loggingClient) &&
+            loggingClient.TryGetProperty("file", out var loggingFile) &&
+            loggingFile.TryGetProperty("id", out var loggingId))
+        {
+            loggingPath = Path.Combine(versionDirectory, loggingId.GetString() ?? string.Empty);
+        }
         var gameDirectory = Path.GetFullPath(request.GameDirectory ?? rootDirectory);
         Directory.CreateDirectory(gameDirectory);
         var assetsDirectory = Path.GetFullPath(ViperXPaths.AssetsDirectory);
@@ -68,7 +76,8 @@ public sealed class MinecraftGameLauncher
             ["launcher_version"] = "1.0",
             ["clientid"] = string.Empty,
             ["auth_xuid"] = string.Empty,
-            ["user_properties"] = "{}"
+            ["user_properties"] = "{}",
+            ["path"] = loggingPath
         };
 
         var startInfo = new ProcessStartInfo
