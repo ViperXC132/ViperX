@@ -1,5 +1,6 @@
 using Xunit;
 using ViperX.App.Models;
+using ViperX.App.Services;
 
 namespace ViperX.Tests;
 
@@ -90,5 +91,25 @@ public sealed class LauncherSettingsTests
         };
 
         Assert.Equal(3, settings.Validate().Count);
+    }
+}
+
+
+public sealed class VerifiedDownloadServiceTests
+{
+    [Fact]
+    public async Task Downloader_RejectsNonHttpsSource()
+    {
+        var service = new VerifiedDownloadService();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.DownloadAsync(new Uri("http://example.invalid/file"), Path.Combine(Path.GetTempPath(), "viperx-test-download")));
+    }
+
+    [Fact]
+    public async Task Downloader_RejectsMalformedSha1()
+    {
+        var service = new VerifiedDownloadService();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.DownloadAsync(new Uri("https://example.invalid/file"), Path.Combine(Path.GetTempPath(), "viperx-test-download"), expectedSha1: "not-a-hash"));
     }
 }
