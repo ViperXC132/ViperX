@@ -68,7 +68,12 @@ public sealed class MinecraftGameLauncher
             if (profileNode["arguments"] is not null)
                 baseNode["arguments"] = profileNode["arguments"]!.DeepClone();
 
-            var combinedLibraries = baseNode["libraries"] as JsonArray ?? new JsonArray();
+            var combinedLibraries = baseNode["libraries"] as JsonArray;
+            if (combinedLibraries is null)
+            {
+                combinedLibraries = new JsonArray();
+                baseNode["libraries"] = combinedLibraries;
+            }
             if (profileNode["libraries"] is JsonArray fabricLibraries)
             {
                 foreach (var library in fabricLibraries)
@@ -106,7 +111,6 @@ public sealed class MinecraftGameLauncher
                     });
                 }
             }
-            baseNode["libraries"] = combinedLibraries;
             metadataJson = baseNode.ToJsonString();
         }
         using var document = JsonDocument.Parse(metadataJson);
