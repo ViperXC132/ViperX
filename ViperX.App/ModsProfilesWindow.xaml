@@ -13,9 +13,11 @@
             <TextBlock Text="Create profiles and install, disable, enable, or remove local mod JAR files. Downloading mods from third-party sites is intentionally not automatic." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
         <Border Grid.Row="1" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,14">
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0"><TextBlock Text="MODRINTH MOD SEARCH" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold"/><TextBox x:Name="ModSearchBox" ToolTip="Search mods by name" Margin="0,6,10,0"/></StackPanel>
                 <Button Grid.Column="1" Content="Search mods" Click="SearchModrinth_Click" VerticalAlignment="Bottom" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="Search modpacks" Click="SearchModrinthPacks_Click" VerticalAlignment="Bottom" Margin="0,0,8,0"/>
+                <Button Grid.Column="3" Content="Install selected pack" Click="InstallSelectedModpack_Click" VerticalAlignment="Bottom" Margin="0,0,8,0"/>
                 <Button Grid.Column="2" Content="Import .mrpack" Click="ImportModpack_Click" VerticalAlignment="Bottom"/>
             </Grid>
         </Border>
