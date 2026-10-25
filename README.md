@@ -50,7 +50,7 @@ dotnet run --project .\ViperX.App\ViperX.App.csproj
 - [x] Installation and profile metadata foundations.
 - [x] Profile CRUD UI and persistent profile metadata.
 - [x] Inspect and open each installation’s local mods folder.
-- [x] Fabric loader integration (needs real-game verification); Forge/NeoForge are not yet integrated.\n- [x] Local mod JAR install/copy, enable/disable by safe filename extension, remove, list, and open mods folder.
+- [x] Fabric loader integration (needs real-game verification); Forge/NeoForge are not yet integrated.\n- [x] Local mod JAR install/copy, enable/disable by safe filename extension, remove, list, and open mods folder.\n- [x] Modrinth mod search and compatible-file downloads with SHA-1/size verification.\n- [x] Online Modrinth modpack search/download and local .mrpack import with safe paths, checksummed downloads, and overrides extraction (vanilla/Fabric only; unsupported loader packs rejected).
 
 ### Polish & Release
 - [x] Atomic JSON persistence for settings and installation metadata.
