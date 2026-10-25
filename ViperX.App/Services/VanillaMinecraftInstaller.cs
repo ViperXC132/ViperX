@@ -132,7 +132,7 @@ public sealed class VanillaMinecraftInstaller
 
         var store = new InstallationStore();
         var existing = (await store.LoadAsync(cancellationToken)).ToList();
-        existing.RemoveAll(item => string.Equals(item.GameVersion, versionId, StringComparison.OrdinalIgnoreCase));
+        existing.RemoveAll(item => string.Equals(item.GameVersion, versionId, StringComparison.OrdinalIgnoreCase) && string.Equals(Path.GetFullPath(item.GameDirectory), Path.GetFullPath(instanceRoot), StringComparison.OrdinalIgnoreCase));
         existing.Add(new ViperX.App.Models.MinecraftInstallation
         {
             Name = $"Minecraft {versionId}",
