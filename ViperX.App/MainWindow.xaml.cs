@@ -6,7 +6,23 @@ namespace ViperX.App;
 
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        Loaded += async (_, _) =>
+        {
+            try
+            {
+                var settings = await new LauncherSettingsService().LoadAsync();
+                Width = settings.WindowWidth;
+                Height = settings.WindowHeight;
+            }
+            catch
+            {
+                // Keep the usable XAML defaults if settings cannot be read.
+            }
+        };
+    }
 
     private void SetPage(string eyebrow, string title, string message)
     {
@@ -48,8 +64,14 @@ public partial class MainWindow : Window
 
             var launcher = new MinecraftGameLauncher();
             var requiredJavaMajor = await launcher.GetRequiredJavaMajorAsync(installation.GameVersion);
+            var launcherSettings = await new LauncherSettingsService().LoadAsync();
             var javaService = new JavaRuntimeService();
-            var runtimes = await javaService.FindInstalledAsync();
+            var configuredRuntime = string.IsNullOrWhiteSpace(launcherSettings.JavaExecutablePath)
+                ? null
+                : await javaService.ProbeAsync(launcherSettings.JavaExecutablePath);
+            var runtimes = configuredRuntime is null
+                ? await javaService.FindInstalledAsync()
+                : new[] { configuredRuntime };
             var runtime = runtimes
                 .Where(item => item.MajorVersion >= requiredJavaMajor)
                 .OrderBy(item => item.MajorVersion == requiredJavaMajor ? 0 : 1)
@@ -66,8 +88,10 @@ public partial class MainWindow : Window
                 PlayerUuid = session.Account.Uuid,
                 AccessToken = session.MinecraftAccessToken,
                 JavaExecutablePath = runtime.ExecutablePath,
-                MemoryMegabytes = installation.MemoryMegabytes,
-                GameDirectory = installation.GameDirectory
+                MemoryMegabytes = installation.MemoryMegabytes == 4096
+                    ? launcherSettings.DefaultMemoryMegabytes
+                    : installation.MemoryMegabytes,
+                GameDirectory = launcherSettings.DefaultGameDirectory ?? installation.GameDirectory
             });
             installation = installation with { LastPlayedAt = DateTimeOffset.UtcNow };
             await store.SaveAsync(installations.Select(item => item.Id == installation.Id ? installation : item));
@@ -75,6 +99,8 @@ public partial class MainWindow : Window
             PageTitle.Text = $"Minecraft {installation.GameVersion} launched.";
             MessageBox.Show(this, $"Minecraft {installation.GameVersion} was started with Java {runtime.Version}.", "ViperX",
                 MessageBoxButton.OK, MessageBoxImage.Information);
+            if (launcherSettings.CloseLauncherOnGameStart)
+                Close();
         }
         catch (Exception ex)
         {
@@ -104,6 +130,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Settings_Click(object sender, RoutedEventArgs e) =>
-        SetPage("PREFERENCES", "Settings", "Java path, memory allocation, game directory, resolution, and persistent settings will be added in later phases.");
+    private void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new SettingsWindow { Owner = this };
+        if (window.ShowDialog() == true)
+        {
+            PageEyebrow.Text = "PREFERENCES";
+            PageTitle.Text = "Settings saved.";
+        }
+    }
 }
