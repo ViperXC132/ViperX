@@ -16,3 +16,6 @@
 # Local launcher data and logs
 .viperx-data/
 *.log
+# Generated publish output
+artifacts/
+dist/
