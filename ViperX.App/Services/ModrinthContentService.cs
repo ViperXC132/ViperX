@@ -70,6 +70,8 @@ public sealed class ModrinthContentService
 
     public async Task InstallModAsync(ModrinthProject project, MinecraftInstallation installation, CancellationToken cancellationToken = default)
     {
+        if (!string.Equals(project.ProjectType, "mod", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Only Modrinth projects of type 'mod' can be installed as individual mods.");
         var loader = installation.Loader.ToLowerInvariant();
         if (loader == "vanilla")
         {
@@ -99,8 +101,11 @@ public sealed class ModrinthContentService
         var fileName = SafeFileName(version.File.Filename);
         if (!fileName.EndsWith(".jar", StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Modrinth's selected primary file is not a JAR.");
+        if (!Uri.TryCreate(version.File.Url, UriKind.Absolute, out var downloadUri) ||
+            !string.Equals(downloadUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Modrinth returned a non-HTTPS mod download URL.");
         var destination = Path.Combine(modsDirectory, fileName);
-        await _downloader.DownloadAsync(new Uri(version.File.Url), destination, version.File.Sha1, version.File.Size, cancellationToken: cancellationToken);
+        await _downloader.DownloadAsync(downloadUri, destination, version.File.Sha1, version.File.Size, cancellationToken: cancellationToken);
     }
 
     public async Task<IReadOnlyList<ModrinthProject>> SearchModpacksAsync(string query, CancellationToken cancellationToken = default)
@@ -156,6 +161,12 @@ public sealed class ModrinthContentService
         try
         {
             using var archive = ZipFile.OpenRead(archivePath);
+            if (archive.Entries.Count > 20000)
+                throw new InvalidDataException("Modpack archive contains too many entries.");
+            var declaredUncompressedBytes = archive.Entries.Aggregate(0L, (total, entry) =>
+                entry.Length > 0 && total > long.MaxValue - entry.Length ? long.MaxValue : total + Math.Max(0, entry.Length));
+            if (declaredUncompressedBytes > 4L * 1024 * 1024 * 1024)
+                throw new InvalidDataException("Modpack archive expands beyond the 4 GiB safety limit.");
             var indexEntry = archive.GetEntry("modrinth.index.json")
                 ?? throw new InvalidDataException("This is not a valid Modrinth .mrpack: modrinth.index.json is missing.");
             if (indexEntry.Length > 4 * 1024 * 1024) throw new InvalidDataException("Modpack index is too large.");
