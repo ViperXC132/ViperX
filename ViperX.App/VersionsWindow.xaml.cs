@@ -8,6 +8,8 @@ namespace ViperX.App;
 public partial class VersionsWindow : Window
 {
     private readonly MinecraftVersionManifestService _manifestService = new();
+    private readonly VanillaMinecraftInstaller _installer = new();
+    private CancellationTokenSource? _installCancellation;
     private IReadOnlyList<MinecraftVersionInfo> _allVersions = Array.Empty<MinecraftVersionInfo>();
 
     public VersionsWindow()
@@ -81,10 +83,57 @@ public partial class VersionsWindow : Window
         SelectedTypeText.Text = version.Type.ToUpperInvariant();
         ReleaseDateText.Text = version.ReleaseTime?.ToLocalTime().ToString("dd MMM yyyy") ?? "Not provided";
         ManifestUrlText.Text = version.Url;
+        InstallButton.IsEnabled = version.IsRelease || version.IsSnapshot;
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) =>
         await LoadVersionsAsync(refresh: true);
 
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    private async void Install_Click(object sender, RoutedEventArgs e)
+    {
+        if (VersionsList.SelectedItem is not MinecraftVersionInfo version || InstallButton.IsEnabled == false)
+            return;
+
+        _installCancellation?.Cancel();
+        _installCancellation?.Dispose();
+        _installCancellation = new CancellationTokenSource();
+        var token = _installCancellation.Token;
+        InstallButton.IsEnabled = false;
+        RefreshButton.IsEnabled = false;
+        SearchBox.IsEnabled = false;
+        try
+        {
+            var progress = new Progress<(string Stage, double Progress)>(item =>
+            {
+                if (!token.IsCancellationRequested)
+                    StatusText.Text = item.Progress > 0
+                        ? $"{item.Stage} — {item.Progress:P0}"
+                        : item.Stage;
+            });
+            await _installer.InstallAsync(version.Id, progress, token);
+            StatusText.Text = $"Minecraft {version.Id} installed. Java and sign-in are still required to launch it.";
+            MessageBox.Show(this, $"Minecraft {version.Id} files were downloaded and verified where Mojang supplied checksums.\n\nYou can now configure Java and sign in before launching.", "Installation complete", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText.Text = "Installation cancelled.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Installation failed. Review the error and retry.";
+            MessageBox.Show(this, ex.Message, "Minecraft installation failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            InstallButton.IsEnabled = VersionsList.SelectedItem is MinecraftVersionInfo selected && (selected.IsRelease || selected.IsSnapshot);
+            RefreshButton.IsEnabled = true;
+            SearchBox.IsEnabled = true;
+        }
+    }
+
+    private void Close_Click(object sender, RoutedEventArgs e)
+    {
+        _installCancellation?.Cancel();
+        Close();
+    }
 }
