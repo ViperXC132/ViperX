@@ -3,9 +3,14 @@ name: Build ViperX
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: viperx-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -23,3 +28,12 @@ jobs:
         run: dotnet build .\ViperX.sln --configuration Release --no-restore
       - name: Run tests
         run: dotnet test .\ViperX.sln --configuration Release --no-build
+      - name: Publish self-contained Windows x64 launcher
+        run: dotnet publish .\ViperX.App\ViperX.App.csproj --configuration Release --runtime win-x64 --self-contained true /p:PublishSingleFile=true --output .\artifacts\ViperX
+      - name: Upload launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ViperX-win-x64
+          path: artifacts/ViperX/
+          if-no-files-found: error
+          retention-days: 14
