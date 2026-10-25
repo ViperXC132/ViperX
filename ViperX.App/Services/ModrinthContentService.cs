@@ -92,6 +92,51 @@ public sealed class ModrinthContentService
         await _downloader.DownloadAsync(new Uri(version.File.Url), destination, version.File.Sha1, version.File.Size, cancellationToken: cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ModrinthProject>> SearchModpacksAsync(string query, CancellationToken cancellationToken = default)
+    {
+        var uri = new Uri("https://api.modrinth.com/v2/search?query=" + Uri.EscapeDataString(query.Trim()) +
+            "&limit=30&facets=" + Uri.EscapeDataString("[[\"project_type:modpack\"]]"));
+        using var response = await Http.GetAsync(uri, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        return doc.RootElement.GetProperty("hits").EnumerateArray().Select(hit => new ModrinthProject(
+            hit.GetProperty("project_id").GetString()!,
+            hit.GetProperty("title").GetString() ?? hit.GetProperty("slug").GetString()!,
+            hit.GetProperty("description").GetString() ?? string.Empty,
+            hit.GetProperty("slug").GetString()!,
+            hit.GetProperty("project_type").GetString() ?? "modpack",
+            hit.TryGetProperty("icon_url", out var icon) && icon.ValueKind == JsonValueKind.String ? icon.GetString() : null)).ToArray();
+    }
+
+    public async Task<MinecraftInstallation> DownloadAndImportModpackAsync(ModrinthProject project, CancellationToken cancellationToken = default)
+    {
+        using var response = await Http.GetAsync($"https://api.modrinth.com/v2/project/{Uri.EscapeDataString(project.ProjectId)}/version", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        foreach (var version in doc.RootElement.EnumerateArray())
+        {
+            foreach (var file in version.GetProperty("files").EnumerateArray())
+            {
+                var filename = file.GetProperty("filename").GetString() ?? string.Empty;
+                if (!filename.EndsWith(".mrpack", StringComparison.OrdinalIgnoreCase)) continue;
+                var url = file.GetProperty("url").GetString()!;
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var downloadUri) || downloadUri.Scheme != Uri.UriSchemeHttps)
+                    throw new InvalidDataException("Modrinth returned a non-HTTPS modpack URL.");
+                var temp = Path.Combine(ViperXPaths.RootDirectory, "downloads", Guid.NewGuid().ToString("N") + ".mrpack");
+                try
+                {
+                    await _downloader.DownloadAsync(downloadUri, temp,
+                        file.TryGetProperty("hashes", out var hashes) && hashes.TryGetProperty("sha1", out var sha) ? sha.GetString() : null,
+                        file.TryGetProperty("size", out var size) ? size.GetInt64() : null,
+                        cancellationToken: cancellationToken);
+                    return await ImportMrpackAsync(temp, cancellationToken);
+                }
+                finally { try { if (File.Exists(temp)) File.Delete(temp); } catch (IOException) { } }
+            }
+        }
+        throw new InvalidDataException("This Modrinth project has no downloadable .mrpack release.");
+    }
+
     public async Task<MinecraftInstallation> ImportMrpackAsync(string archivePath, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(archivePath)) throw new FileNotFoundException("Modpack archive not found.", archivePath);
