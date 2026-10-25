@@ -41,7 +41,8 @@
                 <Border Background="#233D2B" CornerRadius="5" Padding="9,5" HorizontalAlignment="Left"><TextBlock Text="✦  BUILT FOR YOUR NEXT WORLD" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/></Border>
                 <TextBlock Text="Your world.&#10;Your rules." FontSize="42" FontWeight="ExtraBold" LineHeight="46" Margin="0,16,0,8"/>
                 <TextBlock Text="A faster way to get into Minecraft. Pick an installation, manage your setup, and launch your next adventure." Foreground="#B7C8BC" FontSize="13" TextWrapping="Wrap" MaxWidth="460" LineHeight="21"/>
-                <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                <ComboBox x:Name="InstallationSelector" DisplayMemberPath="Name" ToolTip="Choose which Minecraft installation to launch" MinWidth="280" MaxWidth="440" Margin="0,18,0,0" Padding="8,7"/>
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Content="▶   PLAY MINECRAFT" Background="{StaticResource AccentBrush}" Foreground="#061009" BorderBrush="{StaticResource AccentBrush}" FontWeight="Bold" Padding="22,13" Click="Play_Click"/>
                   <Button Content="Manage installations  →" Margin="10,0,0,0" Padding="16,13" Click="Versions_Click"/>
                 </StackPanel>
