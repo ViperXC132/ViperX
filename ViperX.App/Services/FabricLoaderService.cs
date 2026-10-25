@@ -64,7 +64,7 @@ public sealed class FabricLoaderService
 
         var store = new InstallationStore();
         var installations = (await store.LoadAsync(cancellationToken)).ToList();
-        var index = installations.FindIndex(item => string.Equals(item.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase));
+        var index = installations.FindIndex(item => string.Equals(item.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase) && string.Equals(Path.GetFullPath(item.GameDirectory), Path.GetFullPath(instanceRoot), StringComparison.OrdinalIgnoreCase));
         if (index < 0)
             throw new InvalidOperationException("The installed version metadata could not be found.");
         installations[index] = installations[index] with { Loader = "Fabric", LoaderVersion = selected.Version };
