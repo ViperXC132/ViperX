@@ -5,11 +5,14 @@ A Windows Minecraft launcher built with C#, WPF, and .NET 8.
 **Brand promise:** Your Minecraft. Your Rules. Your World.
 
 ## Requirements
-- Windows 10/11
-- .NET 8 SDK
-- Visual Studio 2022 with the .NET desktop development workload, or the .NET CLI
+
+- Windows 10 or 11 (x64)
+- A valid Minecraft: Java Edition account for authenticated online play
+- A registered Microsoft Entra/Azure public-client application ID for Microsoft sign-in
+- .NET 8 SDK to build from source; the CI artifact is self-contained
 
 ## Build, test, and run
+
 From the repository root in PowerShell:
 
 ```powershell
@@ -19,46 +22,44 @@ dotnet test .\ViperX.sln --configuration Release --no-build
 dotnet run --project .\ViperX.App\ViperX.App.csproj
 ```
 
-## Implementation status
+## Current implementation
 
-### Foundation
-- [x] Dark ViperX WPF shell and navigation.
-- [x] Official Mojang version manifest with in-memory caching and refresh.
-- [x] Centralized local data paths, created at startup.
-- [x] Installation, profile, account-identity, and settings models with validation.
-- [x] JSON persistence for launcher settings and installation metadata.
-- [x] Windows CI workflow and focused unit tests.
+### Launcher foundation
 
-### Install & Play
-- [x] HTTP downloader with temporary files, expected-size checks, and optional SHA-1 verification.
-- [x] Vanilla client and library download pipeline from official version metadata.
-- [x] Windows native library extraction with archive path checks.
-- [x] Asset index/object download with SHA-1 verification.
-- [x] Java discovery and version probing.
-- [x] Process launch argument construction from Mojang version metadata.
-- [x] Connect version catalog, installation metadata, Java selection, and authenticated launch to the main UI.
-- [ ] Exercise full install/launch across representative Minecraft versions in Windows CI and fix compatibility gaps.
+- Dark WPF interface and navigation for versions, accounts, installations, mods/profiles, and settings.
+- Mojang version manifest discovery and version metadata retrieval.
+- Vanilla client, library, native, and asset download pipeline with size/hash verification where metadata provides it.
+- Java discovery and version probing, launch argument assembly, and process startup.
+- Persistent launcher settings, profiles, and installation metadata.
+- Local diagnostics viewer for Minecraft logs and crash reports.
 
 ### Accounts
-- [x] Microsoft device-code sign-in flow implementation.
-- [x] Xbox Live and XSTS exchange, Minecraft Services sign-in, entitlement and profile checks.
-- [x] Session token kept separate from the persistable account identity model.
-- [x] Integrate device-code sign-in into the Accounts window (requires the user to provide a registered public-client application ID).
-- [ ] Add OS-protected refresh-token storage and account removal controls.
 
-### Mods & Profiles
-- [x] Installation and profile metadata foundations.
-- [x] Profile CRUD UI and persistent profile metadata.
-- [x] Inspect and open each installation’s local mods folder.
-- [x] Fabric loader integration (needs real-game verification); Forge/NeoForge are not yet integrated.\n- [x] Local mod JAR install/copy, enable/disable by safe filename extension, remove, list, and open mods folder.\n- [x] Modrinth mod search and compatible-file downloads with SHA-1/size verification.\n- [x] Online Modrinth modpack search/download and local .mrpack import with safe paths, checksummed downloads, and overrides extraction (vanilla/Fabric only; unsupported loader packs rejected).
+- Microsoft device-code sign-in flow, Xbox Live/XSTS exchange, Minecraft Services authentication, entitlement checks, and profile lookup.
+- The user must configure a public-client application ID. No third-party client ID or secret is bundled.
+- Refresh-token protection and complete account lifecycle polish still need additional work.
 
-### Polish & Release
-- [x] Atomic JSON persistence for settings and installation metadata.
-- [x] Automated unit-test project and Windows GitHub Actions workflow.
-- [ ] Run the Windows CI build/tests and resolve any remaining failures (this environment cannot run .NET locally).
-- [x] Local diagnostics window for latest.log and crash reports, with bounded file reads.\n- [ ] Accessibility review, packaging, and release validation.
+### Mods and modpacks
 
-## Important limitations
-This repository is still under active development. The installer downloads vanilla client, libraries, and asset objects from URLs in Mojang's version metadata; it is not yet a fully verified production launcher. Launching requires a valid authenticated Minecraft session. The Microsoft authentication service needs a registered public-client application ID and is not yet wired to the UI. Do not commit client IDs that belong to someone else, client secrets, access tokens, refresh tokens, or other credentials.
+- Local mod JAR management: add, list, enable/disable, remove, and open the mods folder.
+- Fabric loader installation and launch-profile integration (compiled and CI-tested, but not yet verified by a full live-game test matrix).
+- Modrinth mod search and compatible-file download with size/SHA-1 verification.
+- Modrinth modpack discovery and download, plus local `.mrpack` import.
+- Importer protects against unsafe archive paths, checks remote file hashes/sizes when provided, and extracts overrides into a separate installation directory.
+- Vanilla and Fabric modpacks are supported by the importer. Forge, NeoForge, and Quilt modpack installation/launch are not implemented and are explicitly rejected rather than falsely marked installed.
+- Automatic mod dependency resolution is not implemented.
 
-ViperX has basic local mod-file management and Fabric profile support; Forge/NeoForge runtime integration, automatic mod dependency resolution, Quilt modpack support, and real-world launch validation remain unfinished. Modrinth search/download and basic vanilla/Fabric .mrpack import are implemented but need CI and in-game verification. The diagnostics window reads local logs only and does not upload them. A successful compile is not claimed until the latest Windows Actions build and tests report success.
+## CI build
+
+GitHub Actions restores, builds, tests, publishes a self-contained Windows x64 launcher, and uploads it as a workflow artifact. The latest checked run completed successfully:
+
+- [Latest successful build and downloadable artifact](https://github.com/ViperXC132/ViperX/actions/runs/40229656105)
+- [Source repository](https://github.com/ViperXC132/ViperX)
+
+Open the workflow run and download the `ViperX-win-x64` artifact from its Artifacts section. Artifacts are retained for a limited period by GitHub Actions.
+
+## Known limitations
+
+ViperX is still under active development and should not yet be described as a fully production-validated launcher. The successful CI build verifies compilation, tests, and packaging—not successful launches across all Minecraft releases or every modpack. Real Windows game-launch testing is still required. Legacy versions, Forge/NeoForge/Quilt, automatic mod dependency resolution, protected refresh-token storage, accessibility review, and release packaging need further work.
+
+Never commit access tokens, refresh tokens, client secrets, or other credentials. The diagnostics window reads local logs and does not upload them.
