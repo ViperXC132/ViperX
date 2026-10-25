@@ -102,8 +102,13 @@ public sealed class MicrosoftMinecraftAuthService
                 throw new HttpRequestException($"Minecraft ownership check failed ({(int)entitlementResponse.StatusCode}): {SafeError(entitlementBody)}");
             using var entitlementDocument = JsonDocument.Parse(entitlementBody);
             if (!entitlementDocument.RootElement.TryGetProperty("items", out var items) ||
-                items.ValueKind != JsonValueKind.Array || items.GetArrayLength() == 0)
-                throw new UnauthorizedAccessException("This Microsoft account does not appear to own Minecraft Java Edition.");
+                items.ValueKind != JsonValueKind.Array ||
+                !items.EnumerateArray().Any(item =>
+                    item.TryGetProperty("name", out var entitlementName) &&
+                    entitlementName.ValueKind == JsonValueKind.String &&
+                    (string.Equals(entitlementName.GetString(), "game_minecraft", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(entitlementName.GetString(), "product_minecraft", StringComparison.OrdinalIgnoreCase))))
+                throw new UnauthorizedAccessException("This Microsoft account does not appear to have the Minecraft Java Edition entitlement.");
         }
 
         progress?.Report("Loading Minecraft profile…");
