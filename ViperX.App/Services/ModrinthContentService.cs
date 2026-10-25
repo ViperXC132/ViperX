@@ -180,7 +180,7 @@ public sealed class ModrinthContentService
 
             if (loaderName == "Fabric")
             {
-                await new FabricLoaderService().InstallLatestStableAsync(gameVersion, cancellationToken);
+                await new FabricLoaderService().InstallLatestStableAsync(gameVersion, cancellationToken, loader.Value.GetString());
                 var sharedProfile = FabricLoaderService.GetProfilePath(gameVersion,
                     (await new InstallationStore().LoadAsync(cancellationToken)).FirstOrDefault(x => x.GameVersion == gameVersion && string.Equals(Path.GetFullPath(x.GameDirectory), Path.GetFullPath(sharedRoot), StringComparison.OrdinalIgnoreCase))?.LoaderVersion
                     ?? throw new InvalidOperationException("Fabric loader installation did not return a loader version."));
