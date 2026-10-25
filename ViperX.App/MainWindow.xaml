@@ -6,7 +6,7 @@
         <StackPanel DockPanel.Dock="Top">
           <StackPanel Orientation="Horizontal" Margin="4,10,0,34">
             <Border Width="36" Height="36" CornerRadius="11" Background="{StaticResource AccentBrush}"><TextBlock Text="V" Foreground="#071009" FontSize="24" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center"><TextBlock Text="VIPERX" FontSize="20" FontWeight="ExtraBold" LetterSpacing="1"/><TextBlock Text="MINECRAFT LAUNCHER" FontSize="9" Foreground="{StaticResource MutedBrush}" FontWeight="SemiBold"/></StackPanel>
+            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center"><TextBlock Text="VIPERX" FontSize="20" FontWeight="ExtraBold"/><TextBlock Text="MINECRAFT LAUNCHER" FontSize="9" Foreground="{StaticResource MutedBrush}" FontWeight="SemiBold"/></StackPanel>
           </StackPanel>
           <TextBlock Text="WORKSPACE" Foreground="{StaticResource MutedBrush}" FontSize="10" FontWeight="Bold" Margin="8,0,0,10"/>
           <Button Content="⌂    Home" HorizontalContentAlignment="Left" Background="#1B2A20" BorderBrush="#315B3D" Margin="0,0,0,6" Click="Home_Click"/>
