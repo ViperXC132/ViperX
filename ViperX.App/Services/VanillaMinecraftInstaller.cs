@@ -128,6 +128,19 @@ public sealed class VanillaMinecraftInstaller
         await File.WriteAllTextAsync(Path.Combine(versionDirectory, "installed.json"),
             JsonSerializer.Serialize(new { versionId, installedAtUtc = DateTimeOffset.UtcNow, source = "mojang" }, new JsonSerializerOptions { WriteIndented = true }),
             cancellationToken);
+
+        var store = new InstallationStore();
+        var existing = (await store.LoadAsync(cancellationToken)).ToList();
+        existing.RemoveAll(item => string.Equals(item.GameVersion, versionId, StringComparison.OrdinalIgnoreCase));
+        existing.Add(new ViperX.App.Models.MinecraftInstallation
+        {
+            Name = $"Minecraft {versionId}",
+            GameVersion = versionId,
+            GameDirectory = instanceRoot,
+            MemoryMegabytes = 4096,
+            Loader = "Vanilla"
+        });
+        await store.SaveAsync(existing, cancellationToken);
         progress?.Report(("Installation complete", 1));
     }
 
