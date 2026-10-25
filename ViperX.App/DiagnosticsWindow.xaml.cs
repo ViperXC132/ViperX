@@ -49,7 +49,7 @@ public partial class DiagnosticsWindow : Window
             var latest = Path.Combine(root, "logs", "latest.log");
             if (File.Exists(latest)) files.Add(new LogFileItem("logs/latest.log", latest, File.GetLastWriteTimeUtc(latest)));
             AddFiles(files, Path.Combine(root, "crash-reports"), "crash-reports");
-            AddFiles(files, Path.Combine(root, "logs"), "logs", "*.log.gz");
+            AddFiles(files, Path.Combine(root, "logs"), "logs", "*.log");
             _files = files.OrderByDescending(item => item.LastWriteTimeUtc).ToArray();
             FilesList.ItemsSource = _files;
             if (FilesList.Items.Count > 0) FilesList.SelectedIndex = 0;
