@@ -9,6 +9,22 @@ public sealed class MinecraftGameLauncher
 {
     private readonly MinecraftVersionManifestService _manifest = new();
 
+    public async Task<int> GetRequiredJavaMajorAsync(string versionId, CancellationToken cancellationToken = default)
+    {
+        var version = await _manifest.FindVersionAsync(versionId, cancellationToken)
+            ?? throw new InvalidOperationException($"Version '{versionId}' was not found in Mojang's manifest.");
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        using var response = await http.GetAsync(version.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var root = document.RootElement;
+        return root.TryGetProperty("javaVersion", out var javaVersion) &&
+               javaVersion.TryGetProperty("majorVersion", out var major) && major.TryGetInt32(out var required)
+            ? required
+            : 8;
+    }
+
     public async Task<Process> LaunchAsync(MinecraftLaunchRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
