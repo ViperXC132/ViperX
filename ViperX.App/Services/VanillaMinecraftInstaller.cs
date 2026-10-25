@@ -41,6 +41,21 @@ public sealed class VanillaMinecraftInstaller
             new Progress<double>(p => progress?.Report(("Downloading game client", p * 0.45))),
             cancellationToken);
 
+        if (root.TryGetProperty("logging", out var logging) &&
+            logging.TryGetProperty("client", out var loggingClient) &&
+            loggingClient.TryGetProperty("file", out var loggingFile) &&
+            loggingFile.TryGetProperty("url", out var loggingUrl))
+        {
+            var logConfigPath = Path.Combine(versionDirectory, loggingFile.TryGetProperty("id", out var logId)
+                ? logId.GetString() ?? "logging.xml"
+                : "logging.xml");
+            await _downloader.DownloadAsync(new Uri(loggingUrl.GetString()!),
+                logConfigPath,
+                loggingFile.TryGetProperty("sha1", out var logSha) ? logSha.GetString() : null,
+                loggingFile.TryGetProperty("size", out var logSize) ? logSize.GetInt64() : null,
+                cancellationToken: cancellationToken);
+        }
+
         if (root.TryGetProperty("libraries", out var libraries))
         {
             var libraryEntries = libraries.EnumerateArray().ToArray();
