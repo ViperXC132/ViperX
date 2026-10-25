@@ -213,9 +213,13 @@ public sealed class MinecraftGameLauncher
                 var relative = pathElement.GetString();
                 if (string.IsNullOrWhiteSpace(relative))
                     continue;
-                var fullPath = Path.GetFullPath(Path.Combine(ViperXPaths.LibrariesDirectory, relative.Replace('/', Path.DirectorySeparatorChar)));
-                if (File.Exists(fullPath))
-                    paths.Add(fullPath);
+                var libraryRoot = Path.GetFullPath(ViperXPaths.LibrariesDirectory);
+                var fullPath = Path.GetFullPath(Path.Combine(libraryRoot, relative.Replace('/', Path.DirectorySeparatorChar)));
+                if (!fullPath.StartsWith(libraryRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("Library classpath path escapes the libraries directory.");
+                if (!File.Exists(fullPath))
+                    throw new FileNotFoundException($"A required Minecraft library is missing: {relative}", fullPath);
+                paths.Add(fullPath);
             }
         }
         paths.Add(Path.GetFullPath(clientJar));
