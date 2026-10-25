@@ -32,6 +32,7 @@ dotnet run --project .\ViperX.App\ViperX.App.csproj
 - [x] Version catalog UI with search, refresh, version type, release date, and manifest URL.
 - [x] Windows CI workflow to restore and build the .NET 8 solution.
 - [ ] Run the CI build and fix any reported errors.
-- [ ] Add installation/profile models and tests.
+- [x] Add installation/profile metadata models with validation.
+- [ ] Add automated tests and verify the Windows CI build.
 
 The version catalog reads Mojang's public metadata only. It does not yet install game files, authenticate players, or launch Minecraft. Those features are planned for later phases.
