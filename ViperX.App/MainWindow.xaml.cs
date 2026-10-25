@@ -10,7 +10,7 @@ public partial class MainWindow : Window
     {
         PageEyebrow.Text = eyebrow;
         PageTitle.Text = title;
-        MessageBox.Show(message, "ViperX", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(this, message, "ViperX", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void Home_Click(object sender, RoutedEventArgs e)
@@ -19,9 +19,21 @@ public partial class MainWindow : Window
         PageTitle.Text = "Welcome back.";
     }
 
-    private void Play_Click(object sender, RoutedEventArgs e) => SetPage("PLAY", "Ready to launch?", "The launcher interface is set up, but the Minecraft installation and launch pipeline has not been implemented yet. Next: version metadata, downloads, Java validation, and game process launch.");
-    private void Versions_Click(object sender, RoutedEventArgs e) => SetPage("GAME LIBRARY", "Installations", "Version management is the next implementation step. This page will install and configure official Minecraft versions.");
-    private void Mods_Click(object sender, RoutedEventArgs e) => SetPage("CUSTOMIZE", "Mods & modpacks", "Mod discovery, loader installation, and modpack import are not connected yet. They will be implemented after the installation engine.");
-    private void Accounts_Click(object sender, RoutedEventArgs e) => SetPage("IDENTITY", "Accounts", "Microsoft authentication must use the supported sign-in flow. Account storage and authentication are not implemented yet.");
-    private void Settings_Click(object sender, RoutedEventArgs e) => SetPage("PREFERENCES", "Settings", "Java path, memory allocation, game directory, resolution, and theme persistence will be added in the settings stage.");
+    private void Play_Click(object sender, RoutedEventArgs e) =>
+        SetPage("PLAY", "Ready to launch?", "The installation and launch pipeline is not implemented yet. Phase 2 will add game downloads, Java validation, launch argument generation, and process launch.");
+
+    private void Versions_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new VersionsWindow { Owner = this };
+        window.ShowDialog();
+    }
+
+    private void Mods_Click(object sender, RoutedEventArgs e) =>
+        SetPage("CUSTOMIZE", "Mods & modpacks", "Mod discovery, loader installation, and modpack import will be added after the installation engine.");
+
+    private void Accounts_Click(object sender, RoutedEventArgs e) =>
+        SetPage("IDENTITY", "Accounts", "Microsoft authentication will use the supported sign-in flow. Account storage and authentication are not implemented yet.");
+
+    private void Settings_Click(object sender, RoutedEventArgs e) =>
+        SetPage("PREFERENCES", "Settings", "Java path, memory allocation, game directory, resolution, and persistent settings will be added in later phases.");
 }
