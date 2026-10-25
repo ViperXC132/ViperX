@@ -148,6 +148,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void Diagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new DiagnosticsWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     private void Settings_Click(object sender, RoutedEventArgs e)
     {
         var window = new SettingsWindow { Owner = this };
