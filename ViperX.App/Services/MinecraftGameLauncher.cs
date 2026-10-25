@@ -42,7 +42,7 @@ public sealed class MinecraftGameLauncher
 
         var version = await _manifest.FindVersionAsync(request.VersionId, cancellationToken)
             ?? throw new InvalidOperationException($"Version '{request.VersionId}' was not found in Mojang's manifest.");
-        var rootDirectory = Path.Combine(ViperXPaths.InstancesDirectory, request.VersionId);
+        var rootDirectory = Path.GetFullPath(request.InstanceDirectory ?? Path.Combine(ViperXPaths.InstancesDirectory, request.VersionId));
         var versionDirectory = Path.Combine(rootDirectory, "versions", request.VersionId);
         var clientJar = Path.Combine(versionDirectory, request.VersionId + ".jar");
         if (!File.Exists(clientJar) || !File.Exists(Path.Combine(versionDirectory, "installed.json")))
@@ -56,7 +56,7 @@ public sealed class MinecraftGameLauncher
         {
             if (string.IsNullOrWhiteSpace(request.LoaderVersion))
                 throw new InvalidOperationException("The Fabric loader version is missing from installation metadata.");
-            var profilePath = FabricLoaderService.GetProfilePath(request.VersionId, request.LoaderVersion);
+            var profilePath = Path.Combine(rootDirectory, "loader-profiles", $"fabric-{request.LoaderVersion}.json");
             if (!File.Exists(profilePath))
                 throw new FileNotFoundException("The Fabric loader profile is missing. Reinstall Fabric for this version.", profilePath);
             var baseNode = JsonNode.Parse(metadataJson)?.AsObject()
