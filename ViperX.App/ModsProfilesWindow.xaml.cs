@@ -109,7 +109,7 @@ public partial class ModsProfilesWindow : Window
 
     private async void InstallSelectedModrinth_Click(object sender, RoutedEventArgs e)
     {
-        if (ModsList.SelectedItem is not ModrinthProject project || InstallationCombo.SelectedItem is not MinecraftInstallation installation)
+        if (ModsList.SelectedItem is not ModrinthProject project || !string.Equals(project.ProjectType, "mod", StringComparison.OrdinalIgnoreCase) || InstallationCombo.SelectedItem is not MinecraftInstallation installation)
         {
             MessageBox.Show(this, "Search Modrinth and select a project first.", "Select a mod", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
