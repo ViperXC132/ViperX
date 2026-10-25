@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using ViperX.App.Models;
 
 namespace ViperX.App.Services;
@@ -50,8 +51,65 @@ public sealed class MinecraftGameLauncher
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         using var response = await http.GetAsync(version.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var metadataJson = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (string.Equals(request.Loader, "Fabric", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(request.LoaderVersion))
+                throw new InvalidOperationException("The Fabric loader version is missing from installation metadata.");
+            var profilePath = FabricLoaderService.GetProfilePath(request.VersionId, request.LoaderVersion);
+            if (!File.Exists(profilePath))
+                throw new FileNotFoundException("The Fabric loader profile is missing. Reinstall Fabric for this version.", profilePath);
+            var baseNode = JsonNode.Parse(metadataJson)?.AsObject()
+                ?? throw new InvalidDataException("Mojang version metadata is invalid.");
+            var profileNode = JsonNode.Parse(await File.ReadAllTextAsync(profilePath, cancellationToken))?.AsObject()
+                ?? throw new InvalidDataException("Fabric loader profile is invalid.");
+            if (profileNode["mainClass"] is not null)
+                baseNode["mainClass"] = profileNode["mainClass"]!.DeepClone();
+            if (profileNode["arguments"] is not null)
+                baseNode["arguments"] = profileNode["arguments"]!.DeepClone();
+
+            var combinedLibraries = baseNode["libraries"] as JsonArray ?? new JsonArray();
+            if (profileNode["libraries"] is JsonArray fabricLibraries)
+            {
+                foreach (var library in fabricLibraries)
+                {
+                    if (library is not JsonObject fabricLibrary ||
+                        fabricLibrary["name"] is not JsonValue nameValue ||
+                        !nameValue.TryGetValue<string>(out var coordinate) ||
+                        string.IsNullOrWhiteSpace(coordinate))
+                        continue;
+                    if (fabricLibrary["downloads"] is JsonObject)
+                    {
+                        combinedLibraries.Add(fabricLibrary.DeepClone());
+                        continue;
+                    }
+
+                    var relative = FabricLibraryRelativePath(coordinate);
+                    var baseUrl = fabricLibrary["url"]?.GetValue<string>();
+                    if (string.IsNullOrWhiteSpace(baseUrl))
+                        throw new InvalidDataException($"Fabric library '{coordinate}' has no repository URL.");
+                    var libraryRoot = Path.GetFullPath(ViperXPaths.LibrariesDirectory);
+                    var libraryPath = Path.GetFullPath(Path.Combine(libraryRoot, relative.Replace('/', Path.DirectorySeparatorChar)));
+                    if (!libraryPath.StartsWith(libraryRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("Fabric library path escapes the libraries directory.");
+                    combinedLibraries.Add(new JsonObject
+                    {
+                        ["name"] = coordinate,
+                        ["downloads"] = new JsonObject
+                        {
+                            ["artifact"] = new JsonObject
+                            {
+                                ["path"] = relative,
+                                ["url"] = baseUrl.TrimEnd('/') + "/" + relative
+                            }
+                        }
+                    });
+                }
+            }
+            baseNode["libraries"] = combinedLibraries;
+            metadataJson = baseNode.ToJsonString();
+        }
+        using var document = JsonDocument.Parse(metadataJson);
         var metadata = document.RootElement;
 
         var mainClass = metadata.GetProperty("mainClass").GetString()
@@ -143,6 +201,18 @@ public sealed class MinecraftGameLauncher
             throw new InvalidOperationException("Java did not start the Minecraft process.");
         }
         return process;
+    }
+
+    private static string FabricLibraryRelativePath(string coordinate)
+    {
+        var parts = coordinate.Split(':');
+        if (parts.Length < 3 || parts.Any(string.IsNullOrWhiteSpace))
+            throw new InvalidDataException($"Unsupported Fabric Maven coordinate: {coordinate}");
+        var group = parts[0].Replace('.', '/');
+        var artifact = parts[1];
+        var version = parts[2];
+        var classifier = parts.Length > 3 ? "-" + parts[3] : string.Empty;
+        return $"{group}/{artifact}/{version}/{artifact}-{version}{classifier}.jar";
     }
 
     private static List<string> GetArguments(JsonElement metadata, string kind)
