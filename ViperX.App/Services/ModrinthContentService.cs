@@ -211,8 +211,9 @@ public sealed class ModrinthContentService
             foreach (var entry in archive.Entries.Where(e => e.FullName.StartsWith("overrides/", StringComparison.Ordinal)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var relative = SafeArchivePath(entry.FullName["overrides/".Length..]);
-                if (relative.Length == 0) continue;
+                var rawRelative = entry.FullName["overrides/".Length..].TrimEnd('/');
+                if (rawRelative.Length == 0) continue;
+                var relative = SafeArchivePath(rawRelative);
                 var destination = Path.GetFullPath(Path.Combine(instanceRoot, relative.Replace('/', Path.DirectorySeparatorChar)));
                 EnsureUnderRoot(instanceRoot, destination);
                 if (string.IsNullOrEmpty(entry.Name)) { Directory.CreateDirectory(destination); continue; }
@@ -229,7 +230,7 @@ public sealed class ModrinthContentService
                 Loader = loaderName,
                 LoaderVersion = loaderName == "Fabric"
                     ? (await new InstallationStore().LoadAsync(cancellationToken)).FirstOrDefault(x => x.GameVersion == gameVersion && string.Equals(Path.GetFullPath(x.GameDirectory), Path.GetFullPath(sharedRoot), StringComparison.OrdinalIgnoreCase))?.LoaderVersion
-                    : loader.Value.GetString(),
+                    : null,
                 MemoryMegabytes = 4096
             };
             var store = new InstallationStore();
