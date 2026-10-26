@@ -72,16 +72,20 @@ public partial class MainWindow : Window
             var configuredRuntime = string.IsNullOrWhiteSpace(launcherSettings.JavaExecutablePath)
                 ? null
                 : await javaService.ProbeAsync(launcherSettings.JavaExecutablePath);
-            var runtimes = configuredRuntime is null
-                ? await javaService.FindInstalledAsync()
-                : new[] { configuredRuntime! };
-            var runtime = runtimes
+            var systemRuntimes = await javaService.FindInstalledAsync();
+            var managedRuntimes = await new JavaRuntimeStoreService().FindManagedAsync();
+            var runtimes = managedRuntimes.Concat(systemRuntimes)
+                .Concat(configuredRuntime is null ? Array.Empty<JavaRuntimeInfo>() : new[] { configuredRuntime })
+                .GroupBy(item => item.ExecutablePath, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
                 .Where(item => item.MajorVersion >= requiredJavaMajor)
-                .OrderBy(item => item.MajorVersion == requiredJavaMajor ? 0 : 1)
+                .OrderBy(item => configuredRuntime is not null && string.Equals(item.ExecutablePath, configuredRuntime.ExecutablePath, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(item => item.MajorVersion == requiredJavaMajor ? 0 : 1)
                 .ThenBy(item => Math.Abs(item.MajorVersion - requiredJavaMajor))
-                .FirstOrDefault();
+                .ToArray();
+            var runtime = runtimes.FirstOrDefault();
             if (runtime is null)
-                throw new InvalidOperationException($"Minecraft {installation.GameVersion} requires Java {requiredJavaMajor} or later, but no compatible Java runtime was found.");
+                throw new InvalidOperationException($"Minecraft {installation.GameVersion} requires Java {requiredJavaMajor} or later, but no compatible runtime was found. Open Java Store to install a compatible version.");
 
             PageTitle.Text = $"Launching Minecraft {installation.GameVersion}…";
             var process = await launcher.LaunchAsync(new ViperX.App.Models.MinecraftLaunchRequest
@@ -128,6 +132,13 @@ public partial class MainWindow : Window
             PageTitle.Text = "Could not launch Minecraft.";
             MessageBox.Show(this, ex.Message, "Launch failed", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private async void JavaStore_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new JavaStoreWindow { Owner = this };
+        window.ShowDialog();
+        await LoadInstallationsAsync();
     }
 
     private void Versions_Click(object sender, RoutedEventArgs e)
