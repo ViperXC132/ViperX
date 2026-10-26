@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text;
 using ViperX.App.Models;
 
 namespace ViperX.App.Services;
@@ -162,11 +163,24 @@ public sealed class MinecraftGameLauncher
             ["path"] = loggingPath
         };
 
+        Directory.CreateDirectory(ViperXPaths.LogsDirectory);
+        var logPath = Path.Combine(ViperXPaths.LogsDirectory,
+            $"minecraft-{SanitizeFileName(request.VersionId)}-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.log");
+        var logLock = new object();
+        File.AppendAllText(logPath,
+            $"[{DateTimeOffset.Now:O}] Starting Minecraft {request.VersionId} with Java: {request.JavaExecutablePath}{Environment.NewLine}",
+            Encoding.UTF8);
+
         var startInfo = new ProcessStartInfo
         {
             FileName = Path.GetFullPath(request.JavaExecutablePath),
             WorkingDirectory = gameDirectory,
-            UseShellExecute = false
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
         };
         if (!string.IsNullOrWhiteSpace(request.YggdrasilServerUrl))
         {
@@ -209,12 +223,51 @@ public sealed class MinecraftGameLauncher
         }
 
         var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        process.OutputDataReceived += (_, args) => AppendProcessLog(logPath, logLock, "OUT", args.Data);
+        process.ErrorDataReceived += (_, args) => AppendProcessLog(logPath, logLock, "ERR", args.Data);
+        process.Exited += (_, _) =>
+        {
+            lock (logLock)
+            {
+                File.AppendAllText(logPath,
+                    $"[{DateTimeOffset.Now:O}] Minecraft process exited with code {SafeExitCode(process)}.{Environment.NewLine}",
+                    Encoding.UTF8);
+            }
+        };
         if (!process.Start())
         {
             process.Dispose();
             throw new InvalidOperationException("Java did not start the Minecraft process.");
         }
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        lock (logLock)
+        {
+            File.AppendAllText(logPath, $"[{DateTimeOffset.Now:O}] Process started. Full log: {logPath}{Environment.NewLine}", Encoding.UTF8);
+        }
         return process;
+    }
+
+    private static void AppendProcessLog(string path, object gate, string stream, string? line)
+    {
+        if (line is null) return;
+        lock (gate)
+        {
+            File.AppendAllText(path, $"[{DateTimeOffset.Now:O}] [{stream}] {line}{Environment.NewLine}", Encoding.UTF8);
+        }
+    }
+
+    private static int SafeExitCode(Process process)
+    {
+        try { return process.ExitCode; }
+        catch (InvalidOperationException) { return -1; }
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(value.Select(character => invalid.Contains(character) ? '_' : character));
     }
 
     private static string FabricLibraryRelativePath(string coordinate)
