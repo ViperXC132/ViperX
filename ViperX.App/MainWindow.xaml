@@ -13,6 +13,7 @@
           <Button Content="▶    Play" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="Play_Click"/>
           <Button Content="▦    Versions" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="Versions_Click"/>
           <Button Content="◇    Mods &amp; Modpacks" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="Mods_Click"/>
+          <Button Content="♨    Java Store" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="JavaStore_Click"/>
           <Button Content="♙    Accounts" HorizontalContentAlignment="Left" Margin="0,0,0,6" Click="Accounts_Click"/>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,8">
@@ -32,19 +33,20 @@
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
         <StackPanel>
           <Border CornerRadius="18" BorderBrush="#31523B" BorderThickness="1" ClipToBounds="True">
-            <Grid MinHeight="290">
+            <Grid MinHeight="310">
               <Grid.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#1A3825" Offset="0"/><GradientStop Color="#14251B" Offset="0.52"/><GradientStop Color="#101713" Offset="1"/></LinearGradientBrush></Grid.Background>
               <Ellipse Width="340" Height="340" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,40,0" Stroke="#284B32" StrokeThickness="1" Opacity="0.8"/>
               <Ellipse Width="250" Height="250" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,85,0" Stroke="#35623F" StrokeThickness="1" Opacity="0.8"/>
               <TextBlock Text="X" FontSize="190" FontWeight="Black" Foreground="#183A25" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,110,0"/>
               <StackPanel VerticalAlignment="Center" Margin="34,28" MaxWidth="560" HorizontalAlignment="Left">
-                <Border Background="#233D2B" CornerRadius="5" Padding="9,5" HorizontalAlignment="Left"><TextBlock Text="✦  BUILT FOR YOUR NEXT WORLD" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/></Border>
-                <TextBlock Text="Your world.&#10;Your rules." FontSize="42" FontWeight="ExtraBold" LineHeight="46" Margin="0,16,0,8"/>
-                <TextBlock Text="A faster way to get into Minecraft. Pick an installation, manage your setup, and launch your next adventure." Foreground="#B7C8BC" FontSize="13" TextWrapping="Wrap" MaxWidth="460" LineHeight="21"/>
+                <Border Background="#233D2B" CornerRadius="5" Padding="9,5" HorizontalAlignment="Left"><TextBlock Text="✦  YOUR NEXT WORLD STARTS HERE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/></Border>
+                <TextBlock Text="Play without limits." FontSize="42" FontWeight="ExtraBold" LineHeight="46" Margin="0,16,0,8"/>
+                <TextBlock Text="Your Minecraft setup, beautifully organized. Pick an installation, manage mods and runtimes, then jump straight into your next adventure." Foreground="#B7C8BC" FontSize="13" TextWrapping="Wrap" MaxWidth="460" LineHeight="21"/>
                 <ComboBox x:Name="InstallationSelector" DisplayMemberPath="Name" ToolTip="Choose which Minecraft installation to launch" MinWidth="280" MaxWidth="440" Margin="0,18,0,0" Padding="8,7"/>
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Content="▶   PLAY MINECRAFT" Background="{StaticResource AccentBrush}" Foreground="#061009" BorderBrush="{StaticResource AccentBrush}" FontWeight="Bold" Padding="22,13" Click="Play_Click"/>
                   <Button Content="Manage installations  →" Margin="10,0,0,0" Padding="16,13" Click="Versions_Click"/>
+                  <Button Content="Java Store" Margin="10,0,0,0" Padding="16,13" Click="JavaStore_Click"/>
                 </StackPanel>
               </StackPanel>
             </Grid>
@@ -55,7 +57,7 @@
             <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="17" Margin="0,0,10,0"><StackPanel><TextBlock Text="◇" FontSize="23" Foreground="{StaticResource AccentBrush}"/><TextBlock Text="Mods &amp; modpacks" FontSize="15" FontWeight="SemiBold" Margin="0,12,0,4"/><TextBlock Text="Organize your modded Minecraft setup." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" FontSize="11"/><Button Content="Manage mods →" HorizontalAlignment="Left" Margin="0,14,0,0" Click="Mods_Click"/></StackPanel></Border>
             <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="17"><StackPanel><TextBlock Text="♙" FontSize="23" Foreground="{StaticResource AccentBrush}"/><TextBlock Text="Accounts" FontSize="15" FontWeight="SemiBold" Margin="0,12,0,4"/><TextBlock Text="Manage your launcher profiles." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" FontSize="11"/><Button Content="View accounts →" HorizontalAlignment="Left" Margin="0,14,0,0" Click="Accounts_Click"/></StackPanel></Border>
           </UniformGrid>
-          <Border Background="#111713" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,14,0,0"><DockPanel><TextBlock Text="ⓘ" Foreground="{StaticResource AccentBrush}" FontSize="18" Margin="0,0,12,0"/><StackPanel><TextBlock Text="First launch setup" FontWeight="SemiBold"/><TextBlock Text="ViperX UI is ready. Minecraft installation, account authentication, and loader integration are the next build stages." Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></DockPanel></Border>
+          <Border Background="#111713" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,14,0,0"><DockPanel><TextBlock Text="ⓘ" Foreground="{StaticResource AccentBrush}" FontSize="18" Margin="0,0,12,0"/><StackPanel><TextBlock Text="YOUR SETUP, YOUR WAY" FontWeight="SemiBold"/><TextBlock Text="Manage Java from the built-in Java Store. ViperX keeps managed runtimes in its own data folder and picks a compatible version when you launch." Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></DockPanel></Border>
         </StackPanel>
       </ScrollViewer>
       <DockPanel Grid.Row="2" Margin="0,18,0,0"><TextBlock Text="VIPERX  /  EARLY ACCESS" Foreground="#637168" FontSize="10" VerticalAlignment="Center"/><TextBlock Text="Crafted for the game." Foreground="#637168" FontSize="10" DockPanel.Dock="Right" VerticalAlignment="Center"/></DockPanel>
